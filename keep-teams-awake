@@ -1,0 +1,65 @@
+明白了 👍 我帮你写一个 后台静默运行 的版本，这样脚本启动后会在后台运行，不会一直占着一个 PowerShell 窗口。
+
+🔹 方案一：用 VBS 启动 PowerShell（推荐）
+
+我们用一个 .vbs 文件来隐藏运行 PowerShell 脚本。
+
+1. PowerShell 脚本（保持状态）
+
+保存为 keep-teams-awake-hidden.ps1（就是之前的 Scroll Lock 脚本）：
+
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+
+public class Keyboard {
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+}
+"@
+
+$VK_SCROLL = 0x91
+$KEYEVENTF_KEYUP = 0x0002
+
+while ($true) {
+    [Keyboard]::keybd_event($VK_SCROLL, 0, 0, [UIntPtr]::Zero)
+    [Keyboard]::keybd_event($VK_SCROLL, 0, $KEYEVENTF_KEYUP, [UIntPtr]::Zero)
+
+    Start-Sleep -Seconds 300
+}
+
+2. VBS 启动器（隐藏窗口运行）
+
+新建一个 run-hidden.vbs 文件，内容如下：
+
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "powershell.exe -ExecutionPolicy Bypass -File ""C:\path\to\keep-teams-awake-hidden.ps1""", 0, False
+
+
+⚠️ 把 C:\path\to\... 替换成你 .ps1 脚本的真实路径。
+参数 0 表示隐藏窗口，False 表示不等待脚本结束。
+
+3. 使用方法
+
+双击 run-hidden.vbs，PowerShell 脚本会在后台运行，没有窗口。
+
+如果要停止，可以打开 任务管理器，找到 powershell.exe 进程，结束即可。
+
+🔹 方案二：任务计划程序 (Task Scheduler)
+
+如果你想让它 开机自动后台运行，可以用 Windows 的 任务计划程序：
+
+打开 Task Scheduler → 创建任务。
+
+触发器选择 登录时。
+
+动作选择 启动程序 → powershell.exe。
+
+参数：
+
+-WindowStyle Hidden -ExecutionPolicy Bypass -File "C:\path\to\keep-teams-awake-hidden.ps1"
+
+
+保存即可。
+
+这样每次开机都会自动在后台运行，不需要你点任何东西。
