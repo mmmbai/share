@@ -49,6 +49,12 @@ public class FirstPersonController : MonoBehaviour
 
         transform.position +=
             movement.normalized * speed * Time.deltaTime;
+
+        if (Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            Application.Quit();
+        }
     }
 
     void OnDisable()
